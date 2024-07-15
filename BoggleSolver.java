@@ -9,10 +9,12 @@ import edu.princeton.cs.algs4.StdOut;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 
 public class BoggleSolver {
     // first 3 letters to word
-    private HashMap<String, TrieSetTemp> tree = new HashMap<>();
+    private HashMap<String, TrieSETemp> tree = new HashMap<>();
+    private HashMap<String, Iterator<String>> visited = new HashMap<>();
 
     // Initializes the data structure using the given array of strings as the dictionary.
     // (You can assume each word in the dictionary contains only the uppercase letters A through Z.)
@@ -21,7 +23,7 @@ public class BoggleSolver {
             if (i.length() > 2) {
                 String st = i.substring(0, 3);
                 if (tree.get(st) == null) {
-                    tree.put(st, new TrieSetTemp());
+                    tree.put(st, new TrieSETemp());
                 }
                 tree.get(st).add(i);
             }
@@ -32,70 +34,37 @@ public class BoggleSolver {
     public Iterable<String> getAllValidWords(BoggleBoard board) {
         int rows = board.rows();
         int cols = board.cols();
+        // for (TrieSETemp trie : tree.values()) {
+        //     for (Iterator<String> it = trie.iterator(); it.hasNext(); ) {
+        //         String str = it.next();
+        //         System.out.println(str);
+        //     }
+        // }
         ArrayList<String> lis = new ArrayList<>();
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
                 char start = board.getLetter(i, j);
                 String word = start + "";
-                if (word.equals("Q")) word += 'U';
+                // if (word.equals("Q")) word += 'U';
                 boolean[][] revealed = new boolean[rows][];
                 for (int ip = 0; ip < rows; ip++) revealed[ip] = new boolean[cols];
                 revealed[i][j] = true;
-                if (i + 1 < rows) {
-                    if (j + 1 < cols) {
-                        String letter = board.getLetter(i + 1, j + 1) + "";
-                        if (letter.equals("Q")) letter += 'U';
-                        dfs1(lis, board, word + letter, i + 1, j + 1,
-                             copyArr(revealed), rows, cols);
+                for (int t = i - 1; t < i + 2; t++) {
+                    for (int r = j - 1; r < j + 2; r++) {
+                        if (t != i || r != j) {
+                            if (t < rows && t >= 0 && r < cols && r >= 0) {
+                                String letter = board.getLetter(t, r) + "";
+                                // if (letter.equals("Q")) letter += 'U';
+
+                                dfs1(lis, board, word + letter, t, r,
+                                     copyArr(revealed), rows, cols);
+                            }
+                        }
                     }
-                    if (j - 1 >= 0) {
-                        String letter = board.getLetter(i + 1, j - 1) + "";
-                        if (letter.equals("Q")) letter += 'U';
-                        dfs1(lis, board, word + letter, i + 1, j - 1,
-                             copyArr(revealed), rows, cols);
-
-                    }
-                    String letter = board.getLetter(i + 1, j) + "";
-                    if (letter.equals("Q")) letter += 'U';
-                    dfs1(lis, board, word + letter, i + 1, j,
-                         copyArr(revealed), rows, cols);
-
-                }
-                if (i - 1 >= 0) {
-                    if (j + 1 < cols) {
-                        String letter = board.getLetter(i - 1, j + 1) + "";
-                        if (letter.equals("Q")) letter += 'U';
-                        dfs1(lis, board, word + letter, i - 1, j + 1,
-                             copyArr(revealed), rows, cols);
-                    }
-                    if (j - 1 >= 0) {
-                        String letter = board.getLetter(i - 1, j - 1) + "";
-                        if (letter.equals("Q")) letter += 'U';
-                        dfs1(lis, board, word + letter, i - 1, j - 1,
-                             copyArr(revealed), rows, cols);
-
-                    }
-                    String letter = board.getLetter(i - 1, j) + "";
-                    if (letter.equals("Q")) letter += 'U';
-                    dfs1(lis, board, word + letter, i - 1, j,
-                         copyArr(revealed), rows, cols);
-
-                }
-                if (j + 1 < cols) {
-                    String letter = board.getLetter(i, j + 1) + "";
-                    if (letter.equals("Q")) letter += 'U';
-                    dfs1(lis, board, word + letter, i, j + 1,
-                         copyArr(revealed), rows, cols);
-
-                }
-                if (j - 1 >= 0) {
-                    String letter = board.getLetter(i, j - 1) + "";
-                    if (letter.equals("Q")) letter += 'U';
-                    dfs1(lis, board, word + letter, i, j - 1,
-                         copyArr(revealed), rows, cols);
-
                 }
             }
+
+
         }
         return lis;
     }
@@ -126,75 +95,34 @@ public class BoggleSolver {
     }
 
     private void dfs2(ArrayList<String> lis, BoggleBoard board, String word, int i, int j,
-                      boolean[][] revealed, int rows, int cols, TrieSetTemp trie) {
-        if (trie.keysWithPrefix(word).iterator().hasNext()) {
-            if (trie.contains(word)) {
-                if (word.length() > 2 && !lis.contains(word)) lis.add(word);
-            }
-            revealed[i][j] = true;
-            if (i + 1 < rows) {
-                if (j + 1 < cols) {
-                    if (!revealed[i + 1][j + 1]) {
-                        String letter = board.getLetter(i + 1, j + 1) + "";
-                        if (letter.equals("Q")) letter += 'U';
-                        dfs2(lis, board, word + letter, i + 1, j + 1, copyArr(revealed), rows, cols,
-                             trie);
+                      boolean[][] revealed, int rows, int cols, TrieSETemp trie) {
+
+        revealed[i][j] = true;
+        String wordStr = word.replace("Q", "QU");
+        if (visited.get(wordStr) == null)
+            visited.put(wordStr, trie.keysWithPrefix(wordStr).iterator());
+        if (visited.get(wordStr).hasNext()) {
+            if (trie.contains(wordStr) && !lis.contains(wordStr))
+                lis.add(wordStr);
+
+            for (int k = i - 1; k < i + 2; k++) {
+                for (int kj = j - 1; kj < j + 2; kj++) {
+                    if (k != i || kj != j) {
+                        if (k < rows && k >= 0 && kj < cols && kj >= 0) {
+                            if (!revealed[k][kj]) {
+
+                                String letter = board.getLetter(k, kj) + "";
+                                // if (letter.equals("Q")) letter += 'U';
+                                dfs2(lis, board, word + letter, k, kj, copyArr(revealed), rows,
+                                     cols,
+                                     trie);
+
+                            }
+
+
+                        }
+
                     }
-                }
-                if (j - 1 >= 0) {
-                    if (!revealed[i + 1][j - 1]) {
-                        String letter = board.getLetter(i + 1, j - 1) + "";
-                        if (letter.equals("Q")) letter += 'U';
-                        dfs2(lis, board, word + letter, i + 1, j - 1,
-                             copyArr(revealed), rows, cols, trie);
-                    }
-                }
-                if (!revealed[i + 1][j]) {
-                    String letter = board.getLetter(i + 1, j) + "";
-                    if (letter.equals("Q")) letter += 'U';
-                    dfs2(lis, board, word + letter, i + 1, j, copyArr(revealed), rows, cols, trie);
-                }
-            }
-            if (i - 1 >= 0) {
-                if (j + 1 < cols) {
-                    if (!revealed[i - 1][j + 1]) {
-
-                        String letter = board.getLetter(i - 1, j + 1) + "";
-                        if (letter.equals("Q")) letter += 'U';
-                        dfs2(lis, board, word + letter, i - 1, j + 1,
-                             copyArr(revealed), rows, cols, trie);
-                    }
-                }
-                if (j - 1 >= 0) {
-                    if (!revealed[i - 1][j - 1]) {
-
-                        String letter = board.getLetter(i - 1, j - 1) + "";
-                        if (letter.equals("Q")) letter += 'U';
-                        dfs2(lis, board, word + letter, i - 1, j - 1,
-                             copyArr(revealed), rows, cols, trie);
-                    }
-                }
-                if (!revealed[i - 1][j]) {
-
-                    String letter = board.getLetter(i - 1, j) + "";
-                    if (letter.equals("Q")) letter += 'U';
-                    dfs2(lis, board, word + letter, i - 1, j, copyArr(revealed), rows, cols, trie);
-                }
-            }
-            if (j + 1 < cols) {
-                if (!revealed[i][j + 1]) {
-
-                    String letter = board.getLetter(i, j + 1) + "";
-                    if (letter.equals("Q")) letter += 'U';
-                    dfs2(lis, board, word + letter, i, j + 1, copyArr(revealed), rows, cols, trie);
-                }
-            }
-            if (j - 1 >= 0) {
-                if (!revealed[i][j - 1]) {
-
-                    String letter = board.getLetter(i, j - 1) + "";
-                    if (letter.equals("Q")) letter += 'U';
-                    dfs2(lis, board, word + letter, i, j - 1, copyArr(revealed), rows, cols, trie);
                 }
             }
 
@@ -204,104 +132,37 @@ public class BoggleSolver {
     private void dfs1(ArrayList<String> lis, BoggleBoard board, String word, int i, int j,
                       boolean[][] revealed, int rows, int cols) {
         revealed[i][j] = true;
+        String tempr = word.replace("Q", "QU");
+        if (tempr.length() > 2) {
+            String tempr1 = tempr.substring(0, 3);
+            if (!lis.contains(tempr)
+                    && tree.get(tempr1) != null && tree.get(tempr1).contains(tempr))
+                lis.add(tempr);
+        }
         if (word.length() < 3) {
-            if (i + 1 < rows) {
-                if (j + 1 < cols) {
-                    if (!revealed[i + 1][j + 1]) {
-                        String letter = board.getLetter(i + 1, j + 1) + "";
-                        TrieSetTemp temp = tree.get(word + letter);
-                        if (letter.equals("Q")) letter += 'U';
-                        if (temp != null) {
-                            dfs2(lis, board, word + letter, i + 1, j + 1, copyArr(revealed), rows,
-                                 cols, temp);
+            for (int ki = i - 1; ki < i + 2; ki++) {
+                for (int kj = j - 1; kj < j + 2; kj++) {
+                    if (ki != i || kj != j) {
+                        if (ki < rows && ki >= 0 && kj < cols && kj >= 0) {
+                            if (!revealed[ki][kj]) {
+                                String letter = board.getLetter(ki, kj) + "";
+                                String query = word + letter;
+                                TrieSETemp temp = tree.get(
+                                        query.replace("Q", "QU").substring(0, 3));
+                                // if (letter.equals("Q")) letter += 'U';
+                                if (temp != null) {
+                                    dfs2(lis, board, query, ki, kj, copyArr(revealed), rows,
+                                         cols, temp);
+                                }
+                            }
                         }
                     }
                 }
-                if (j - 1 >= 0) {
-                    if (!revealed[i + 1][j - 1]) {
-                        String letter = board.getLetter(i + 1, j - 1) + "";
-                        TrieSetTemp temp = tree.get(word + letter);
-                        if (letter.equals("Q")) letter += 'U';
-                        if (temp != null) {
-                            dfs2(lis, board, word + letter, i + 1, j - 1,
-                                 copyArr(revealed), rows, cols, temp);
-                        }
-                    }
-                }
-                if (!revealed[i + 1][j]) {
-
-                    String letter = board.getLetter(i + 1, j) + "";
-                    TrieSetTemp temp = tree.get(word + letter);
-                    if (letter.equals("Q")) letter += 'U';
-                    if (temp != null) {
-                        dfs2(lis, board, word + letter, i + 1, j, copyArr(revealed), rows, cols,
-                             temp);
-                    }
-                }
             }
-            if (i - 1 >= 0) {
-                if (j + 1 < cols) {
-                    if (!revealed[i - 1][j + 1]) {
-                        String letter = board.getLetter(i - 1, j + 1) + "";
-                        TrieSetTemp temp = tree.get(word + letter);
-                        if (letter.equals("Q")) letter += 'U';
-                        if (temp != null) {
-                            dfs2(lis, board, word + letter, i - 1, j + 1,
-                                 copyArr(revealed), rows, cols, temp);
-                        }
-                    }
-                }
-                if (j - 1 >= 0) {
-                    if (!revealed[i - 1][j - 1]) {
 
-                        String letter = board.getLetter(i - 1, j - 1) + "";
-                        TrieSetTemp temp = tree.get(word + letter);
-                        if (letter.equals("Q")) letter += 'U';
-                        if (temp != null) {
-
-                            dfs2(lis, board, word + letter, i - 1, j - 1,
-                                 copyArr(revealed), rows, cols, temp);
-                        }
-                    }
-                }
-                if (!revealed[i - 1][j]) {
-
-                    String letter = board.getLetter(i - 1, j) + "";
-                    TrieSetTemp temp = tree.get(word + letter);
-                    if (letter.equals("Q")) letter += 'U';
-                    if (temp != null) {
-                        dfs2(lis, board, word + letter, i - 1, j, copyArr(revealed), rows, cols,
-                             temp);
-                    }
-                }
-            }
-            if (j + 1 < cols) {
-                if (!revealed[i][j + 1]) {
-
-                    String letter = board.getLetter(i, j + 1) + "";
-                    TrieSetTemp temp = tree.get(word + letter);
-                    if (letter.equals("Q")) letter += 'U';
-                    if (temp != null) {
-                        dfs2(lis, board, word + letter, i, j + 1, copyArr(revealed), rows, cols,
-                             temp);
-                    }
-                }
-            }
-            if (j - 1 >= 0) {
-                if (!revealed[i][j - 1]) {
-
-                    String letter = board.getLetter(i, j - 1) + "";
-                    TrieSetTemp temp = tree.get(word + letter);
-                    if (letter.equals("Q")) letter += 'U';
-                    if (temp != null) {
-                        dfs2(lis, board, word + letter, i, j - 1, copyArr(revealed), rows, cols,
-                             temp);
-                    }
-                }
-            }
         }
         else {
-            TrieSetTemp temp = tree.get(word.substring(0, 3));
+            TrieSETemp temp = tree.get(tempr);
             if (temp != null) {
                 dfs2(lis, board, word, i, j, copyArr(revealed), rows, cols, temp);
             }
@@ -346,13 +207,16 @@ public class BoggleSolver {
         BoggleBoard board = new BoggleBoard(args[1]);
         // FileWriter tp = new FileWriter("temp1.txt");
         int score = 0;
+        int ctr = 0;
         for (String word : solver.getAllValidWords(board)) {
             StdOut.println(word);
             score += solver.scoreOf(word);
+            ctr++;
 
             // tp.write(word + System.getProperty("line.separator"));
         }
-        System.out.println(solver.scoreOf("SNOW"));
+        System.out.println(ctr);
+        // System.out.println(solver.scoreOf("SNOW"));
         StdOut.println("Score = " + score);
         // tp.close();
     }

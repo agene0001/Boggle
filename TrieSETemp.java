@@ -5,7 +5,7 @@ import edu.princeton.cs.algs4.TrieSET;
 
 import java.util.Iterator;
 
-public class TrieSetTemp {
+public class TrieSETemp extends TrieSET {
 
 
     private static final int R = 26;        // extended ASCII
@@ -24,7 +24,7 @@ public class TrieSetTemp {
     /**
      * Initializes an empty set of strings.
      */
-    public TrieSetTemp() {
+    public TrieSETemp() {
     }
 
     /**
@@ -116,6 +116,7 @@ public class TrieSetTemp {
         return results;
     }
 
+
     private void collect(Node x, StringBuilder prefix, Queue<String> results) {
         if (x == null) return;
         if (x.isString) results.enqueue(prefix.toString());
@@ -189,7 +190,7 @@ public class TrieSetTemp {
         if (x.isString) length = d;
         if (d == query.length()) return length;
         char c = query.charAt(d);
-        return longestPrefixOf(x.next[c], query, d + 1, length);
+        return longestPrefixOf(x.next[c - 'A'], query, d + 1, length);
     }
 
     /**
